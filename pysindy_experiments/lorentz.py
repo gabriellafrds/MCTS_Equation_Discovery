@@ -46,6 +46,9 @@ end_time = time.time()
 fit_time = end_time - start_time
 
 print("--- Hard Benchmark: Lorenz System ---")
+print(f"library: {poly_library.get_feature_names()}")
+print(f"optimizer: {optimizer}")
+print(f"number of data points: {len(z_train)}")
 print(f"Fit time: {fit_time:.4f} seconds")
 print("Discovered Equations:")
 model.print()
