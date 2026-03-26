@@ -6,33 +6,23 @@ from scipy.optimize import minimize
 # ---------------------------------------------------------------------------
 
 def evaluate_node(node, variables, constants, const_index):
-    """
-    Evaluate a single node of the expression tree recursively.
-
-    node        : a Node object
-    variables   : dict mapping variable names to numpy arrays
-                  e.g. {"x": np.array([1,2,3])}
-    constants   : list of numerical values for C placeholders
-    const_index : list of one integer [i], tracking which constant
-                  we are at (list used so it can be mutated across calls)
-
-    Returns a numpy array of evaluated values.
-    """
     s = node.symbol
 
     # --- Terminal nodes ---
     if s == "x":
         return variables["x"]
 
-    if s == "y":
-        return variables["y"]
-
     if s == "C":
-        # Fetch the next constant value from the list
         val = constants[const_index[0]] if constants is not None else 1.0
         const_index[0] += 1
-        return np.full_like(variables.get("x", np.array([0.0])),
-                            val, dtype=float)
+        return np.full_like(variables.get("x", np.array([0.0])), val, dtype=float)
+
+    # --- Pass-through nodes: f and M ---
+    # These are structural nodes — find the real operator among children
+    if s in ("f", "M"):
+        # Find the operator child (non-M, non-terminal symbol)
+        # and evaluate the full subtree rooted at M
+        return evaluate_M(node, variables, constants, const_index)
 
     # --- Binary operators ---
     if s == "+":
@@ -53,7 +43,6 @@ def evaluate_node(node, variables, constants, const_index):
     if s == "/":
         left  = evaluate_node(node.children[0], variables, constants, const_index)
         right = evaluate_node(node.children[1], variables, constants, const_index)
-        # Avoid division by zero
         right = np.where(np.abs(right) < 1e-10, 1e-10, right)
         return left / right
 
@@ -68,21 +57,63 @@ def evaluate_node(node, variables, constants, const_index):
 
     if s == "exp":
         child = evaluate_node(node.children[0], variables, constants, const_index)
-        # Clip to avoid overflow
         return np.exp(np.clip(child, -100, 100))
 
     if s == "log":
         child = evaluate_node(node.children[0], variables, constants, const_index)
-        # Log only defined for positive values
         return np.log(np.abs(child) + 1e-10)
 
-    # --- Root and intermediate nodes ---
-    # f and M just pass through to their single child
-    if s in ("f", "M"):
-        return evaluate_node(node.children[0], variables, constants, const_index)
-
-    # Unknown symbol
     raise ValueError(f"Unknown symbol in tree: {s}")
+
+
+def evaluate_M(node, variables, constants, const_index):
+    """
+    Evaluate a node whose symbol is 'M' or 'f'.
+    The structure of an M node depends on which rule was applied:
+
+    - M -> x, y, C        : node has one child which is the terminal
+    - M -> sin M, cos M   : node has two children: [operator_symbol, M_child]
+                            but operator_symbol is stored as a child Node
+    - M -> M + M          : node has three children: [M_left, operator, M_right]
+
+    We inspect the children to determine the case.
+    """
+    children = node.children
+
+    # No children: should not happen for a well-formed tree
+    if not children:
+        raise ValueError(f"M node has no children: {node.symbol}")
+
+    # Case 1: single terminal child — M -> x, y, C
+    if len(children) == 1:
+        return evaluate_node(children[0], variables, constants, const_index)
+
+    # Case 2: unary operator — M -> sin M, cos M, exp M, log M
+    # children = [Node("sin"), Node("M")]  or [Node("cos"), Node("M")] etc.
+    if len(children) == 2:
+        op   = children[0].symbol   # the operator
+        arg  = evaluate_node(children[1], variables, constants, const_index)
+        if op == "sin": return np.sin(arg)
+        if op == "cos": return np.cos(arg)
+        if op == "exp": return np.exp(np.clip(arg, -100, 100))
+        if op == "log": return np.log(np.abs(arg) + 1e-10)
+        raise ValueError(f"Unknown unary operator: {op}")
+
+    # Case 3: binary operator — M -> M + M, M * M, M / M
+    # children = [Node("M"), Node("+"), Node("M")]
+    if len(children) == 3:
+        left  = evaluate_node(children[0], variables, constants, const_index)
+        op    = children[1].symbol
+        right = evaluate_node(children[2], variables, constants, const_index)
+        if op == "+": return left + right
+        if op == "-": return left - right
+        if op == "*": return left * right
+        if op == "/":
+            right = np.where(np.abs(right) < 1e-10, 1e-10, right)
+            return left / right
+        raise ValueError(f"Unknown binary operator: {op}")
+
+    raise ValueError(f"M node has unexpected number of children: {len(children)}")
 
 
 def evaluate_tree(node, variables, constants=None):

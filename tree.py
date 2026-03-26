@@ -1,4 +1,3 @@
-# tree.py
 from grammar import RULES, NON_TERMINALS, TERMINALS
 
 class Node:
