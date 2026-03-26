@@ -1,37 +1,37 @@
 import numpy as np
-from grammar import get_valid_actions, is_complete, RULES, NON_TERMINALS, TERMINALS
-from tree import build_tree_step_by_step
-from evaluate import evaluate_tree
+from scipy.integrate import odeint
+from grammar import get_valid_actions, is_complete, RULES
+from tree import build_tree_step_by_step, extract_features_from_tree
+from evaluate import evaluate_tree_sindy
 from mcts import MCTS
 
 # ---------------------------------------------------------------------------
-# Data generation
+# Data generation (Harmonic Oscillator Benchmark)
 # ---------------------------------------------------------------------------
 
-def generate_data_nguyen1(n_points=20, noise=0.0):
+def generate_data_harmonic_oscillator(n_points=1000, noise=0.0):
     """
-    Generate data for the Nguyen-1 benchmark: y = x^3 + x^2 + x
-    This is one of the standard symbolic regression benchmarks
-    used in the SPL paper (Table 1).
-
-    n_points : number of data points
-    noise    : standard deviation of Gaussian noise added to y_dot
-
-    Returns a data dict with keys "variables" and "y_dot".
+    Generate data for the Damped Harmonic Oscillator:
+        dx/dt = -0.1*x + y
+        dy/dt = -x - 0.1*y
     """
-    # Input variable x uniformly sampled in [-1, 1]
-    x = np.linspace(-1, 1, n_points)
+    def harmonic_oscillator(z, t):
+        return [-0.1*z[0] + z[1], -z[0] - 0.1*z[1]]
 
-    # Target equation: x^3 + x^2 + x
-    y_dot = x**3 + x**2 + x
+    dt = 0.05
+    t_train = np.arange(0, n_points * dt, dt)
+    z0 = [1.0, 0.0]
+    z_train = odeint(harmonic_oscillator, z0, t_train)
 
-    # Add optional Gaussian noise
     if noise > 0:
-        y_dot = y_dot + np.random.normal(0, noise, size=y_dot.shape)
+        z_train += np.random.normal(0, noise, z_train.shape)
+
+    # We target discovering the underlying physics of dx/dt
+    y_dot = np.array([harmonic_oscillator(z, 0)[0] for z in z_train])
 
     data = {
-        "variables": {"x": x},
-        "y_dot":     y_dot
+        "variables": {"x": z_train[:, 0], "y": z_train[:, 1]},
+        "y_dot": y_dot
     }
     return data
 
@@ -40,26 +40,25 @@ def generate_data_nguyen1(n_points=20, noise=0.0):
 # Result display
 # ---------------------------------------------------------------------------
 
-def sequence_to_string(sequence):
+def sequence_to_library_strings(sequence):
     """
-    Convert a sequence of production rules to a readable string.
-    Extracts only the right-hand side symbols to show the expression structure.
-
-    Example:
-        [("f", ["M"]), ("M", ["M", "+", "M"]), ("M", ["x"]), ("M", ["x"])]
-        -> "M | M + M | x | x"
+    Converts a sequence of MCTS production rules into a readable list of 
+    basis feature strings (e.g. ['x', 'sin(y)', 'x * y']).
     """
-    parts = [" ".join(right) for (left, right) in sequence]
-    return " | ".join(parts)
+    tree = build_tree_step_by_step(sequence)
+    features = extract_features_from_tree(tree)
+    
+    def render_node(node):
+        if node.is_terminal(): return node.symbol
+        if len(node.children) == 1: return render_node(node.children[0])
+        if len(node.children) == 2: return f"{node.children[0].symbol}({render_node(node.children[1])})"
+        if len(node.children) == 3: return f"({render_node(node.children[0])} {node.children[1].symbol} {render_node(node.children[2])})"
+        return "?"
+        
+    return [render_node(f) for f in features]
 
 
 def print_results(best_sequence, best_reward, data):
-    """
-    Print the results of the MCTS search:
-    - the sequence of rules chosen
-    - the reward obtained
-    - the predicted values vs target values on a few data points
-    """
     print("\n" + "="*60)
     print("SEARCH COMPLETE")
     print("="*60)
@@ -68,22 +67,31 @@ def print_results(best_sequence, best_reward, data):
         print("No valid equation found.")
         return
 
-    print(f"Best reward      : {best_reward:.6f}")
-    print(f"Sequence length  : {len(best_sequence)} rules")
-    print(f"Sequence         : {sequence_to_string(best_sequence)}")
-
-    # Reconstruct and evaluate the best tree
-    tree   = build_tree_step_by_step(best_sequence)
-    y_pred = evaluate_tree(tree, data["variables"])
-    y_dot  = data["y_dot"]
-
-    print("\nPrediction vs target (first 5 points):")
-    print(f"  {'x':>8}  {'predicted':>12}  {'target':>12}  {'error':>12}")
-    x_vals = data["variables"]["x"]
-    for i in range(min(5, len(x_vals))):
-        error = abs(y_pred[i] - y_dot[i])
-        print(f"  {x_vals[i]:>8.4f}  {y_pred[i]:>12.6f}  {y_dot[i]:>12.6f}  {error:>12.6f}")
-
+    print(f"Best raw MCTS reward: {best_reward:.6f}")
+    
+    tree = build_tree_step_by_step(best_sequence)
+    feature_strings = sequence_to_library_strings(best_sequence)
+    
+    # Run the final evaluation to retrieve the STLSQ coefficients
+    mse, coefs = evaluate_tree_sindy(tree, data["variables"], data["y_dot"])
+    
+    print("\n--- Discovered SINDy Equation ---")
+    print(f"MSE: {mse:.6e}")
+    if len(coefs) > 0:
+        eq_parts = []
+        flat_coefs = np.ravel(coefs)
+        for i, c in enumerate(flat_coefs):
+            if abs(c) > 1e-5: # filter out zero or near-zero coefficients
+                eq_parts.append(f"{c:.4f} * {feature_strings[i]}")
+        
+        if not eq_parts:
+            print("dx/dt = 0")
+        else:
+            print("dx/dt = " + " + ".join(eq_parts))
+    else:
+        print("dx/dt = 0 (No features survived thresholding)")
+        
+    print(f"\nFull Feature Library Generated: {feature_strings}")
     print("="*60)
 
 
@@ -92,33 +100,24 @@ def print_results(best_sequence, best_reward, data):
 # ---------------------------------------------------------------------------
 
 def main():
-    # --- Hyperparameters (from Table B.2 of the SPL paper) ---
     config = {
-        "n_episodes"    : 10000,  # number of MCTS episodes
-        "n_simulations" : 10,     # rollouts per expansion
-        "t_max"         : 50,     # maximum sequence length
+        "n_episodes"    : 5000,   # Needs enough episodes to organically find the structure ['x', 'y']
+        "n_simulations" : 10,     # Rollouts per expansion
+        "t_max"         : 20,     # Maximum sequence length
         "c"             : 1.0,    # UCT exploration constant
-        "eta"           : 0.9999, # parsimony discount factor
-        "noise"         : 0.0,    # noise level on target data
-        "n_points"      : 20,     # number of data points
+        "lambda_val"    : 0.01,   # SINDy sparsity penalty (L0)
+        "alpha"         : 0.005,  # MCTS sequence length penalty
+        "beta"          : 1.0,    # Physical validity penalty
+        "noise"         : 0.0,    # Noise level on target data
+        "n_points"      : 1000,   # High point count for good sparse regression
     }
 
-    print("Symbolic Physics Learner — MCTS")
-    print("Target equation: x^3 + x^2 + x  (Nguyen-1)")
+    print("Symbolic Physics Learner — Dynamic PySINDy Integration")
+    print("Target: Damped Harmonic Oscillator (dx/dt = -0.1*x + 1.0*y)")
     print(f"Episodes        : {config['n_episodes']}")
-    print(f"Simulations     : {config['n_simulations']}")
-    print(f"t_max           : {config['t_max']}")
-    print(f"eta             : {config['eta']}")
+    
+    data = generate_data_harmonic_oscillator(n_points=config["n_points"], noise=config["noise"])
 
-    # --- Generate data ---
-    data = generate_data_nguyen1(
-        n_points=config["n_points"],
-        noise=config["noise"]
-    )
-
-    # --- Build grammar object ---
-    # We pass the grammar functions directly as a simple namespace object
-    # so that mcts.py can call grammar.get_valid_actions and grammar.is_complete
     import types
     grammar = types.SimpleNamespace(
         get_valid_actions = get_valid_actions,
@@ -126,7 +125,6 @@ def main():
         rules             = RULES,
     )
 
-    # --- Run MCTS ---
     print("\nStarting search...")
     agent = MCTS(
         grammar=grammar,
@@ -134,12 +132,12 @@ def main():
         c=config["c"],
         n_simulations=config["n_simulations"],
         t_max=config["t_max"],
-        eta=config["eta"],
+        lambda_val=config["lambda_val"],
+        alpha=config["alpha"],
+        beta=config["beta"]
     )
 
     best_sequence, best_reward = agent.run(n_episodes=config["n_episodes"])
-
-    # --- Print results ---
     print_results(best_sequence, best_reward, data)
 
 

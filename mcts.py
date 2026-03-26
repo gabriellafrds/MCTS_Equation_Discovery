@@ -46,13 +46,15 @@ class MCTSNode:
         self.Q  = max(self.Q, reward)
 
 class MCTS:
-    def __init__(self, grammar, data, c=1.0, n_simulations=10, t_max=50, eta=0.9999):
+    def __init__(self, grammar, data, c=1.0, n_simulations=10, t_max=50, lambda_val=0.01, alpha=0.005, beta=1.0):
         self.grammar = grammar  # Grammar object (defines valid rules)
         self.data = data  # observed data (X, Y_dot)
         self.c = c  # exploration constant in UCT
         self.n_simulations = n_simulations  # number of random rollouts per expansion
         self.t_max = t_max  # maximum sequence length allowed
-        self.eta = eta  # parsimony discount factor
+        self.lambda_val = lambda_val
+        self.alpha = alpha
+        self.beta = beta
 
         self.best_reward = 0.0  # best raw reward found so far across all episodes
         self.best_sequence = None  # sequence of rules that gave the best reward
@@ -138,7 +140,10 @@ class MCTS:
 
             if self.grammar.is_complete(seq):
                 # Raw reward
-                r = compute_reward(seq, self.data, self.grammar, eta=self.eta)
+                r = compute_reward(
+                    seq, self.data, self.grammar, 
+                    lambda_val=self.lambda_val, alpha=self.alpha, beta=self.beta
+                )
 
                 # Update global max before scaling
                 if r > self.global_max_reward:

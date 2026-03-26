@@ -1,21 +1,24 @@
 # Production rules
 # Each rule maps a non-terminal to a list of symbols
 RULES = [
-    ("f", ["M"]),
+    ("f", ["Library"]),
 
-    ("M", ["M", "+", "M"]),
+    ("Library", ["Feature"]),
+    ("Library", ["Feature", "Library"]),
+
+    ("Feature", ["M"]),
+
     ("M", ["M", "*", "M"]),
-    ("M", ["M", "/", "M"]),
     ("M", ["sin", "M"]),
     ("M", ["cos", "M"]),
     ("M", ["exp", "M"]),
     ("M", ["x"]),
     ("M", ["y"]),
-    ("M", ["C"]),
+    ("M", ["z"]),
 ]
 
-NON_TERMINALS = {"f", "M"}
-TERMINALS = {"x", "y", "C", "+", "*", "/", "sin", "cos", "exp"}
+NON_TERMINALS = {"f", "Library", "Feature", "M"}
+TERMINALS = {"x", "y", "z", "*", "sin", "cos", "exp"}
 
 def _get_stack(state):
     """

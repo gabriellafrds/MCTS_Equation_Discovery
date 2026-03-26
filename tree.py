@@ -52,3 +52,29 @@ def build_tree_step_by_step(sequence_of_rules):
             stack.insert(0, child)
 
     return root
+
+
+def extract_features_from_tree(node):
+    """
+    Extract a list of Feature nodes from a Library tree.
+    """
+    features = []
+    
+    if node.symbol == "f":
+        if node.children:
+            return extract_features_from_tree(node.children[0])
+            
+    elif node.symbol == "Library":
+        # Library -> Feature
+        # or Library -> Feature, Library
+        if node.children:
+            features.extend(extract_features_from_tree(node.children[0])) # The Feature
+        if len(node.children) > 1:
+            features.extend(extract_features_from_tree(node.children[1])) # The rest of the Library
+            
+    elif node.symbol == "Feature":
+        # The child of Feature is M, which represents the math expression tree
+        if node.children:
+            features.append(node.children[0])
+            
+    return features
