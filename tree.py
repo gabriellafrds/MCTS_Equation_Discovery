@@ -78,3 +78,10 @@ def extract_features_from_tree(node):
             features.append(node.children[0])
             
     return features
+
+def count_nodes(node):
+    """
+    Recursively count the total number of rule nodes comprising a mathematical structure.
+    Used for calculating structural complexity C_active and C_unused.
+    """
+    return 1 + sum(count_nodes(child) for child in node.children)

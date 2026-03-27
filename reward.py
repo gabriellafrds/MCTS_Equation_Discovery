@@ -1,63 +1,78 @@
 import numpy as np
-from tree import build_tree_step_by_step
+from tree import build_tree_step_by_step, extract_features_from_tree, count_nodes
 from evaluate import evaluate_tree_sindy
 
 # ---------------------------------------------------------------------------
-# Reward function (Hybrid SPL + SINDy)
+# Reward function (BIC-based)
 # ---------------------------------------------------------------------------
 
-def compute_reward(sequence, data, grammar, lambda_val=0.01, alpha=0.005, beta=1.0):
+def compute_reward(sequence, data, grammar, gamma=0.01, alpha=0.005, beta=0.05):
     """
     Compute the reward for a complete sequence of production rules.
 
-    This implements an additive penalty reward model:
-        r = 1 / (1 + MSE + lambda * ||Xi||_0 + alpha * C_active + beta * P_physics)
-
+    This implements the BIC-based exponential decay reward:
+        R_final = exp(-gamma * BIC) * [1 / (1 + alpha*C_active + beta*C_unused)]
+    
     where:
-        MSE         measures the STLSQ sparse regression fit.
-        ||Xi||_0    is the number of surviving features in the SINDy model.
-        C_active    is the structural complexity of the generated features (sequence length).
-        P_physics   is a boolean penalty (1 if breaks physical rules, 0 if valid).
+    where:
+        BIC = n_points * ln(MSE) + ||Xi||_0 * ln(n_points)
+        C_active is the number of nodes making up the newly generated feature if it has a non-zero coefficient.
+        C_unused is the number of nodes making up the newly generated feature if it has a zero coefficient.
     """
-    # Safety check: sequence must be complete
+def compute_reward(sequence, data, grammar, locked_features_cols=None, gamma=0.01, alpha=0.005, beta=0.05):
+    if locked_features_cols is None:
+        locked_features_cols = []
+        
     if not grammar.is_complete(sequence):
         return 0.0
 
-    # --- Step 1: reconstruct the expression tree ---
     tree = build_tree_step_by_step(sequence)
-
     variables = data["variables"]
     y_dot     = data["y_dot"]
+    n_points  = len(y_dot)
 
-    # --- Step 2: evaluate the feature matrix and fit STLSQ ---
     try:
-        mse, coefs = evaluate_tree_sindy(tree, variables, y_dot)
-
-        # Guard against nan or inf in the evaluation
+        mse, coefs = evaluate_tree_sindy(tree, variables, y_dot, locked_features_cols)
         if not np.isfinite(mse) or mse > 1e10:
             return 0.0
-
     except Exception:
-        # If anything goes wrong during evaluation, reward is 0
         return 0.0
 
-    # --- Step 3: compute penalties ---
-    
-    # 1. ||Xi||_0 penalty (SINDy sparsity)
     l0_norm = np.count_nonzero(coefs) if len(coefs) > 0 else 0
     
-    # 2. C_active penalty (Total grammar sequence length)
-    c_active = len(sequence)
+    # Clip MSE to avoid log(0)
+    mse_clamped = max(mse, 1e-12)
     
-    # 3. P_physics penalty (Placeholder for hard boundary checks, currently 0)
-    p_physics = 0.0 
+    # Calculate BIC
+    bic = n_points * np.log(mse_clamped) + l0_norm * np.log(n_points)
+    
+    # Limit exponential argument to prevent float64 overflow
+    exp_arg = np.clip(-gamma * bic, -700, 700)
+    exp_decay = np.exp(exp_arg)
 
-    # --- Step 4: final reward ---
-    penalty_sum = mse + (lambda_val * l0_norm) + (alpha * c_active) + (beta * p_physics)
-    reward = 1.0 / (1.0 + penalty_sum)
+    # Calculate structural complexity of the newly proposed feature
+    features = extract_features_from_tree(tree)
+    flat_coefs = np.ravel(coefs) if len(coefs) > 0 else []
+    
+    c_active = 0
+    c_unused = 0
+    
+    # The new feature is always appended at the end of the locked features matrix
+    new_feature_idx = len(locked_features_cols)
+    
+    for _, f_node in enumerate(features): # Should only be 1 feature based on new grammar
+        complexity = count_nodes(f_node)
+        
+        # Check if STLSQ zeroed out this newly proposed feature
+        if new_feature_idx < len(flat_coefs) and abs(flat_coefs[new_feature_idx]) > 1e-5:
+            c_active += complexity
+        else:
+            c_unused += complexity
+
+    complexity_penalty = 1.0 / (1.0 + (alpha * c_active) + (beta * c_unused))
+    reward = exp_decay * complexity_penalty
 
     return reward
-
 
 # ---------------------------------------------------------------------------
 # Adaptive reward scaling (Equation 3 of the SPL paper)

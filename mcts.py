@@ -40,19 +40,25 @@ class MCTSNode:
     def update(self, reward):
         """
         Update statistics after a simulation.
-        SPL uses max reward instead of average (greedy search).
+        We use a running average of the reward to ensure the UCT
+        value is stable and robust against single noisy rollouts.
         """
         self.N += 1
-        self.Q  = max(self.Q, reward)
+        # Incremental average update
+        self.Q += (reward - self.Q) / self.N
 
 class MCTS:
-    def __init__(self, grammar, data, c=1.0, n_simulations=10, t_max=50, lambda_val=0.01, alpha=0.005, beta=1.0):
+    def __init__(self, grammar, data, locked_features_cols=None, c=1.0, n_simulations=10, t_max=50, gamma=0.01, alpha=0.005, beta=0.05):
+        if locked_features_cols is None:
+            locked_features_cols = []
+        self.locked_features_cols = locked_features_cols
+        
         self.grammar = grammar  # Grammar object (defines valid rules)
         self.data = data  # observed data (X, Y_dot)
         self.c = c  # exploration constant in UCT
         self.n_simulations = n_simulations  # number of random rollouts per expansion
         self.t_max = t_max  # maximum sequence length allowed
-        self.lambda_val = lambda_val
+        self.gamma = gamma
         self.alpha = alpha
         self.beta = beta
 
@@ -123,41 +129,92 @@ class MCTS:
 
     def _simulate(self, node):
         """
-        Phase 3 - Simulation (rollout).
-        Complete the sequence randomly, evaluate, scale the reward,
-        and return the best result across n_simulations rollouts.
+        Phase 3 - SHUSS Simulation (Sequential Halving applied to Trees).
+        Instead of uniform random rollouts, we treat the remaining generation 
+        as a multi-armed bandit tournament over the immediate next valid actions.
         """
+        if self.grammar.is_complete(node.state):
+            r = compute_reward(
+                node.state, self.data, self.grammar, 
+                locked_features_cols=self.locked_features_cols,
+                gamma=self.gamma, alpha=self.alpha, beta=self.beta
+            )
+            if r > self.global_max_reward:
+                self.global_max_reward = r
+                
+            r_scaled = scale_reward(r, self.global_max_reward)
+            if r > self.best_reward:
+                self.best_reward = r
+                self.best_sequence = node.state
+            return r_scaled
+
+        valid_actions = self.grammar.get_valid_actions(node.state)
+        if not valid_actions:
+            return 0.0
+
+        S = list(valid_actions)
+        budget = self.n_simulations
+        
+        # Calculate how many tournament rounds we specifically need to reach 1 survivor
+        n_rounds = math.ceil(math.log2(len(valid_actions))) if len(valid_actions) > 1 else 1
+        
+        # Use index as dictionary key because grammar rules (tuples with lists) are unhashable
+        S_indices = list(range(len(S)))
+        action_stats = {i: {'sum': 0.0, 'count': 0} for i in S_indices}
         best_reward = 0.0
 
-        for _ in range(self.n_simulations):
-            seq = list(node.state)
+        for round_idx in range(n_rounds):
+            # Budget distribution: evenly divide remaining budget across surviving arms and rounds
+            rollouts_per_action = max(1, math.floor(budget / (len(S_indices) * n_rounds)))
+            
+            for i in S_indices:
+                action = S[i]
+                for _ in range(rollouts_per_action):
+                    # Uniform random rollout starting from the evaluated action
+                    seq = list(node.state) + [action]
 
-            while len(seq) < self.t_max:
-                valid_actions = self.grammar.get_valid_actions(seq)
-                if not valid_actions:
-                    break
-                seq.append(random.choice(valid_actions))
+                    while len(seq) < self.t_max:
+                        valid = self.grammar.get_valid_actions(seq)
+                        if not valid:
+                            break
+                        seq.append(random.choice(valid))
 
-            if self.grammar.is_complete(seq):
-                # Raw reward
-                r = compute_reward(
-                    seq, self.data, self.grammar, 
-                    lambda_val=self.lambda_val, alpha=self.alpha, beta=self.beta
-                )
+                    if self.grammar.is_complete(seq):
+                        r = compute_reward(
+                            seq, self.data, self.grammar, 
+                            locked_features_cols=self.locked_features_cols,
+                            gamma=self.gamma, alpha=self.alpha, beta=self.beta
+                        )
 
-                # Update global max before scaling
-                if r > self.global_max_reward:
-                    self.global_max_reward = r
+                        # Update global max before scaling
+                        if r > self.global_max_reward:
+                            self.global_max_reward = r
 
-                # Scale reward (Equation 3 of the paper)
-                r_scaled = scale_reward(r, self.global_max_reward)
+                        # Scale reward (Equation 3 of the SPL paper)
+                        r_scaled = scale_reward(r, self.global_max_reward)
 
-                best_reward = max(best_reward, r_scaled)
+                        action_stats[i]['sum'] += r_scaled
+                        action_stats[i]['count'] += 1
 
-                # Track best equation using raw reward for interpretability
-                if r > self.best_reward:
-                    self.best_reward = r
-                    self.best_sequence = seq
+                        best_reward = max(best_reward, r_scaled)
+
+                        # Track best equation universally
+                        if r > self.best_reward:
+                            self.best_reward = r
+                            self.best_sequence = seq
+
+            # SHUSS Core: Halve the set of surviving active sequences based on average reward
+            if len(S_indices) > 1:
+                 averages = []
+                 for i in S_indices:
+                     cnt = action_stats[i]['count']
+                     avg = action_stats[i]['sum'] / cnt if cnt > 0 else 0.0
+                     averages.append((avg, i))
+                 
+                 # Sort descending and aggressively prune the bottom 50%
+                 averages.sort(key=lambda x: x[0], reverse=True)
+                 keep_count = math.ceil(len(S_indices) / 2)
+                 S_indices = [i for avg, i in averages[:keep_count]]
 
         return best_reward
 

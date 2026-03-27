@@ -43,8 +43,9 @@ def generate_data_harmonic_oscillator(n_points=1000, noise=0.0):
 def sequence_to_library_strings(sequence):
     """
     Converts a sequence of MCTS production rules into a readable list of 
-    basis feature strings (e.g. ['x', 'sin(y)', 'x * y']).
+    basis feature strings (e.g. ['x']).
     """
+    if not sequence: return []
     tree = build_tree_step_by_step(sequence)
     features = extract_features_from_tree(tree)
     
@@ -57,41 +58,48 @@ def sequence_to_library_strings(sequence):
         
     return [render_node(f) for f in features]
 
+def evaluate_locked_dictionary(locked_features_cols, y_dot):
+    """
+    Evaluates the final locked dictionary of features to print the equation.
+    """
+    import pysindy as ps
+    if not locked_features_cols:
+        return 1e10, []
+        
+    Theta = np.column_stack(locked_features_cols)
+    optimizer = ps.STLSQ(threshold=0.05, alpha=0.05)
+    
+    try:
+        optimizer.fit(Theta, y_dot)
+        y_pred = optimizer.predict(Theta)
+        mse = np.mean((y_pred.flatten() - y_dot) ** 2)
+        return mse, optimizer.coef_
+    except:
+        return 1e10, []
 
-def print_results(best_sequence, best_reward, data):
+def print_final_equation(locked_features_strings, locked_features_cols, y_dot):
     print("\n" + "="*60)
-    print("SEARCH COMPLETE")
+    print("SEARCH COMPLETE - FINAL SINDy MODEL")
     print("="*60)
-
-    if best_sequence is None:
-        print("No valid equation found.")
-        return
-
-    print(f"Best raw MCTS reward: {best_reward:.6f}")
     
-    tree = build_tree_step_by_step(best_sequence)
-    feature_strings = sequence_to_library_strings(best_sequence)
+    mse, coefs = evaluate_locked_dictionary(locked_features_cols, y_dot)
     
-    # Run the final evaluation to retrieve the STLSQ coefficients
-    mse, coefs = evaluate_tree_sindy(tree, data["variables"], data["y_dot"])
-    
-    print("\n--- Discovered SINDy Equation ---")
-    print(f"MSE: {mse:.6e}")
+    print(f"Final Combined MSE: {mse:.6e}")
     if len(coefs) > 0:
         eq_parts = []
         flat_coefs = np.ravel(coefs)
         for i, c in enumerate(flat_coefs):
-            if abs(c) > 1e-5: # filter out zero or near-zero coefficients
-                eq_parts.append(f"{c:.4f} * {feature_strings[i]}")
+            if abs(c) > 1e-5 and i < len(locked_features_strings):
+                eq_parts.append(f"{c:.4f} * {locked_features_strings[i]}")
         
         if not eq_parts:
             print("dx/dt = 0")
         else:
             print("dx/dt = " + " + ".join(eq_parts))
     else:
-        print("dx/dt = 0 (No features survived thresholding)")
+        print("dx/dt = 0")
         
-    print(f"\nFull Feature Library Generated: {feature_strings}")
+    print(f"\nFinal Dictionary: {locked_features_strings}")
     print("="*60)
 
 
@@ -101,13 +109,13 @@ def print_results(best_sequence, best_reward, data):
 
 def main():
     config = {
-        "n_episodes"    : 5000,   # Needs enough episodes to organically find the structure ['x', 'y']
-        "n_simulations" : 10,     # Rollouts per expansion
-        "t_max"         : 20,     # Maximum sequence length
+        "n_episodes"    : 100,    # SHUSS provides exceptional guidance, we barely need UCT episodes!
+        "n_simulations" : 40,     # SHUSS Budget (Must be large enough to split across Halving rounds)
+        "t_max"         : 10,     # Maximum sequence length (single features rarely exceed 10)
         "c"             : 1.0,    # UCT exploration constant
-        "lambda_val"    : 0.01,   # SINDy sparsity penalty (L0)
-        "alpha"         : 0.005,  # MCTS sequence length penalty
-        "beta"          : 1.0,    # Physical validity penalty
+        "gamma"         : 0.005,  # BIC exponential decay
+        "alpha"         : 1.0,    # Massive structural capacity penalty
+        "beta"          : 0.1,    # Unused penalty (less relevant for single features)
         "noise"         : 0.0,    # Noise level on target data
         "n_points"      : 1000,   # High point count for good sparse regression
     }
@@ -125,20 +133,80 @@ def main():
         rules             = RULES,
     )
 
-    print("\nStarting search...")
-    agent = MCTS(
-        grammar=grammar,
-        data=data,
-        c=config["c"],
-        n_simulations=config["n_simulations"],
-        t_max=config["t_max"],
-        lambda_val=config["lambda_val"],
-        alpha=config["alpha"],
-        beta=config["beta"]
-    )
+    print("\nStarting Iterative Feature Search...")
+    
+    locked_features_cols = []
+    locked_features_strings = []
+    best_global_bic = float('inf')
+    max_features = 5
+    
+    for iteration in range(max_features):
+        print(f"\n--- Iteration {iteration+1}/{max_features} ---")
+        agent = MCTS(
+            grammar=grammar,
+            data=data,
+            locked_features_cols=locked_features_cols,
+            c=config["c"],
+            n_simulations=config["n_simulations"],
+            t_max=config["t_max"],
+            gamma=config["gamma"],
+            alpha=config["alpha"],
+            beta=config["beta"]
+        )
 
-    best_sequence, best_reward = agent.run(n_episodes=config["n_episodes"])
-    print_results(best_sequence, best_reward, data)
+        best_sequence, best_reward = agent.run(n_episodes=config["n_episodes"])
+        
+        if not best_sequence:
+            print("MCTS failed to find any valid feature.")
+            break
+            
+        tree = build_tree_step_by_step(best_sequence)
+        features = extract_features_from_tree(tree)
+        if not features:
+            continue
+            
+        new_str = sequence_to_library_strings(best_sequence)[0]
+        
+        # Calculate the numerical column of the new feature
+        from evaluate import evaluate_node
+        new_col = evaluate_node(features[0], data["variables"])
+        if np.isscalar(new_col):
+            new_col = np.full(data["y_dot"].shape[0], new_col)
+        else:
+            new_col = new_col.reshape(-1)
+            
+        # Re-evaluate with SINDy to get the MSE and BIC of the combined library
+        mse, coefs = evaluate_tree_sindy(tree, data["variables"], data["y_dot"], locked_features_cols)
+        
+        l0_norm = np.count_nonzero(coefs)
+        n_points = len(data["y_dot"])
+        mse_clamped = max(mse, 1e-12)
+        bic = n_points * np.log(mse_clamped) + l0_norm * np.log(n_points)
+        
+        print(f"Proposed Feature: {new_str} | Combined BIC: {bic:.2f} | MSE: {mse:.6e}")
+        
+        # Heuristic 1: Explicitly prevent exact duplicate feature strings
+        if new_str in locked_features_strings:
+            print(f"-> REJECTED. '{new_str}' is already in the dictionary.")
+            print("-> Terminating search (Occam's razor).")
+            break
+            
+        # Heuristic 2: Occam's razor. If BIC drops significantly, accept it.
+        # We require a massive threshold improvement to avoid noise adding useless terms.
+        # Since ln(x) explodes near 0, we require a significant jump.
+        improvement_threshold = 100.0 
+        
+        if bic < best_global_bic - improvement_threshold:
+            best_global_bic = bic
+            locked_features_cols.append(new_col)
+            locked_features_strings.append(new_str)
+            print(f"-> ACCEPTED! Dictionary is now: {locked_features_strings}")
+        else:
+            print(f"-> REJECTED. Information gain too low. (Best BIC remains: {best_global_bic:.2f})")
+            print("-> Terminating search (Occam's razor).")
+            break
+
+    print_final_equation(locked_features_strings, locked_features_cols, data["y_dot"])
 
 
 if __name__ == "__main__":

@@ -52,15 +52,19 @@ def evaluate_M(node, variables):
 # SINDy Integration Core
 # ---------------------------------------------------------------------------
 
-def evaluate_tree_sindy(root_node, variables, y_dot):
+def evaluate_tree_sindy(root_node, variables, y_dot, locked_features_cols=None):
     """
-    Extracts all feature terms from the MCTS tree, evaluates them to build
-    a feature matrix (Theta), and computes the sparse regression using STLSQ.
+    Extracts the newly generated feature from the MCTS tree. Combines it with
+    any previously 'locked' feature columns, and computes the sparse regression
+    using STLSQ on the combined dictionary.
     
     Returns:
         mse: Mean Squared Error of the SINDy model prediction
         coefs: Solved STLSQ coefficients array
     """
+    if locked_features_cols is None:
+        locked_features_cols = []
+        
     features = extract_features_from_tree(root_node)
     
     # If the tree generated no valid features
@@ -84,7 +88,12 @@ def evaluate_tree_sindy(root_node, variables, y_dot):
             
         theta_cols.append(val)
         
-    Theta = np.column_stack(theta_cols)
+    # Combine locked features from previous iterations with the new feature
+    all_cols = locked_features_cols + theta_cols
+    if not all_cols:
+        return 1e10, []
+        
+    Theta = np.column_stack(all_cols)
     
     # Initialize the core SINDy STLSQ optimizer
     # Threshold must be < 0.1 because our true physics constant is -0.1
@@ -97,6 +106,6 @@ def evaluate_tree_sindy(root_node, variables, y_dot):
         return 1e10, []
         
     y_pred = optimizer.predict(Theta)
-    mse = np.mean((y_pred - y_dot) ** 2)
+    mse = np.mean((y_pred.flatten() - y_dot) ** 2)
     
     return mse, optimizer.coef_
