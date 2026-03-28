@@ -4,6 +4,7 @@ from grammar import get_valid_actions, is_complete, RULES
 from tree import build_tree_step_by_step, extract_features_from_tree
 from evaluate import evaluate_tree_sindy
 from mcts import MCTS
+from data_generators import lorenz_xdot, nonlinear_three_var, complex_three_var
 
 # ---------------------------------------------------------------------------
 # Data generation (Harmonic Oscillator Benchmark)
@@ -107,21 +108,23 @@ def print_final_equation(locked_features_strings, locked_features_cols, y_dot):
 # Main
 # ---------------------------------------------------------------------------
 
-def main():
-    config = {
-        "n_episodes"    : 100,    # SHUSS provides exceptional guidance, we barely need UCT episodes!
-        "n_simulations" : 40,     # SHUSS Budget (Must be large enough to split across Halving rounds)
-        "t_max"         : 10,     # Maximum sequence length (single features rarely exceed 10)
-        "c"             : 1.0,    # UCT exploration constant
-        "gamma"         : 0.005,  # BIC exponential decay
-        "alpha"         : 1.0,    # Massive structural capacity penalty
-        "beta"          : 0.1,    # Unused penalty (less relevant for single features)
-        "noise"         : 0.0,    # Noise level on target data
-        "n_points"      : 1000,   # High point count for good sparse regression
-    }
+def main(config = None):
+    if config is None:
+        config = {
+            "n_episodes"    : 100,    # SHUSS provides exceptional guidance, we barely need UCT episodes!
+            "n_simulations" : 40,     # SHUSS Budget (Must be large enough to split across Halving rounds)
+            "t_max"         : 10,     # Maximum sequence length (single features rarely exceed 10)
+            "c"             : 1.0,    # UCT exploration constant
+            "gamma"         : 0.005,  # BIC exponential decay
+            "alpha"         : 1.0,    # Massive structural capacity penalty
+            "beta"          : 0.1,    # Unused penalty (less relevant for single features)
+            "noise"         : 0.0,    # Noise level on target data
+            "n_points"      : 1000,   # High point count for good sparse regression
+        }
 
     print("Symbolic Physics Learner — Dynamic PySINDy Integration")
-    print("Target: Damped Harmonic Oscillator (dx/dt = -0.1*x + 1.0*y)")
+    print(f"Using config: {config}")
+    print("Target: y_dot=sin(x2⋅y)+cos(y⋅z)+x")
     print(f"Episodes        : {config['n_episodes']}")
     
     data = generate_data_harmonic_oscillator(n_points=config["n_points"], noise=config["noise"])
@@ -194,9 +197,9 @@ def main():
         # Heuristic 2: Occam's razor. If BIC drops significantly, accept it.
         # We require a massive threshold improvement to avoid noise adding useless terms.
         # Since ln(x) explodes near 0, we require a significant jump.
-        improvement_threshold = 100.0 
-        
-        if bic < best_global_bic - improvement_threshold:
+        improvement_threshold = 10.0
+
+        if bic <= best_global_bic - improvement_threshold or bic <= best_global_bic:
             best_global_bic = bic
             locked_features_cols.append(new_col)
             locked_features_strings.append(new_str)
@@ -205,6 +208,7 @@ def main():
             print(f"-> REJECTED. Information gain too low. (Best BIC remains: {best_global_bic:.2f})")
             print("-> Terminating search (Occam's razor).")
             break
+
 
     print_final_equation(locked_features_strings, locked_features_cols, data["y_dot"])
 
