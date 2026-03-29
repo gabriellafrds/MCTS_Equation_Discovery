@@ -124,7 +124,7 @@ def main(config = None):
 
     print("Symbolic Physics Learner — Dynamic PySINDy Integration")
     print(f"Using config: {config}")
-    print("Target: y_dot=sin(x2⋅y)+cos(y⋅z)+x")
+    print("Target: Harmonic oscillator dx/dt = -0.1*x + y")
     print(f"Episodes        : {config['n_episodes']}")
     
     data = generate_data_harmonic_oscillator(n_points=config["n_points"], noise=config["noise"])
