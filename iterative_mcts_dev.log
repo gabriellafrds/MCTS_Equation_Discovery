@@ -1,6 +1,6 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.10.5)  27 MAR 2026 16:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.10.5)  30 MAR 2026 16:34
 entering extended mode
- restricted \write18 enabled.
+ \write18 enabled.
  %&-line parsing enabled.
 **iterative_mcts_dev.tex
 (./iterative_mcts_dev.tex
@@ -383,7 +383,7 @@ Package: pgfopts 2014/07/10 v2.1a LaTeX package options with pgfkeys
 )
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/tools/shellesc.sty
 Package: shellesc 2023/07/08 v1.0d unified shell escape interface for LaTeX
-Package shellesc Info: Restricted shell escape enabled on input line 77.
+Package shellesc Info: Unrestricted shell escape enabled on input line 75.
 )
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
@@ -843,48 +843,76 @@ File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 1.enc}]
 
 [3]
-runsystem(latexminted cleantemp  --timestamp 20260327162842 14800D0BC2D6B93F65C
-39C8AE7AE9229)...executed safely (allowed).
+\pydata@fh@0=\write6
+\openout6 = `_14800D0BC2D6B93F65C39C8AE7AE9229.data.minted'.
+
+runsystem(latexminted config  --timestamp 20260330163456 14800D0BC2D6B93F65C39C
+8AE7AE9229)...executed.
+
+ (./_14800D0BC2D6B93F65C39C8AE7AE9229.config.minted)
+runsystem(latexminted cleanconfig  --timestamp 20260330163456 14800D0BC2D6B93F6
+5C39C8AE7AE9229)...executed.
+
+
+(./_minted/default.style.minted)
+\openout6 = `_14800D0BC2D6B93F65C39C8AE7AE9229.data.minted'.
+
+runsystem(latexminted highlight  --timestamp 20260330163456 14800D0BC2D6B93F65C
+39C8AE7AE9229)...executed.
+
+
+(./_minted/6E4B3DD1BF72146DED242969342C2E58.highlight.minted
+
+[4]) (./_minted/E3A2A58E238E3DC564F89D67F7F4A5E4.highlight.minted)
+(./_minted/82E95A7CE8A79A6F5AF92A18E01DEB4E.highlight.minted)
+(./_minted/4C604D0E83B117CAFBC3A1AA91BA1894.highlight.minted)
+\openout6 = `_14800D0BC2D6B93F65C39C8AE7AE9229.data.minted'.
+
+runsystem(latexminted highlight  --timestamp 20260330163456 14800D0BC2D6B93F65C
+39C8AE7AE9229)...executed.
+
+
+(./_minted/2A07F45F78E00D312BBAA8E7F762596A.highlight.minted)
+
+[5]
+\openout6 = `_14800D0BC2D6B93F65C39C8AE7AE9229.data.minted'.
+
+runsystem(latexminted clean  --timestamp 20260330163456 14800D0BC2D6B93F65C39C8
+AE7AE9229)...executed.
 
  (./iterative_mcts_dev.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
-
-
-Package rerunfilecheck Warning: File `iterative_mcts_dev.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `iterative_mcts_dev.out':
-(rerunfilecheck)             Before: 6D722833D7BA81DC06F4B10DAA85C632;1863
-(rerunfilecheck)             After:  3DD4F5E2F7D00C0C6817E5AD7E369E43;2748.
+Package rerunfilecheck Info: File `iterative_mcts_dev.out' has not changed.
+(rerunfilecheck)             Checksum: 7B0FD0DF13B19605CA5815D84F026C12;3895.
  ) 
 Here is how much of TeX's memory you used:
- 26686 strings out of 474662
- 548757 string characters out of 5751109
- 1026813 words of memory out of 5000000
- 49304 multiletter control sequences out of 15000+600000
- 569645 words of font info for 77 fonts, out of 8000000 for 9000
+ 27034 strings out of 474662
+ 557024 string characters out of 5751109
+ 1026818 words of memory out of 5000000
+ 49613 multiletter control sequences out of 15000+600000
+ 569813 words of font info for 78 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 96i,6n,105p,611b,551s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 96i,6n,105p,620b,962s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx1
 0.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
 mbx12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmmi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmmi8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmr10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmr12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/pub
-lic/amsfonts/cm/cmr8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2025basic/texmf-dist/f
-onts/type1/public/cm-super/sfrm1095.pfb>
-Output written on iterative_mcts_dev.pdf (3 pages, 160763 bytes).
+cm/cmitt10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmmi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmr10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmr12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/font
+s/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2025basic/texmf-d
+ist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on iterative_mcts_dev.pdf (5 pages, 186005 bytes).
 PDF statistics:
- 131 PDF objects out of 1000 (max. 8388607)
- 102 compressed objects within 2 object streams
- 27 named destinations out of 1000 (max. 500000)
- 69 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 184 PDF objects out of 1000 (max. 8388607)
+ 151 compressed objects within 2 object streams
+ 41 named destinations out of 1000 (max. 500000)
+ 133 words of extra memory for PDF output out of 10000 (max. 10000000)
 

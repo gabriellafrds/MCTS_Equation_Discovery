@@ -13,6 +13,8 @@ def evaluate_node(node, variables):
         return variables["x"]
     if s == "y":
         return variables.get("y", np.zeros_like(variables["x"]))
+    if s == "z":
+        return variables.get("z", np.zeros_like(variables["x"]))
 
     if s in ("Feature", "M"):
         return evaluate_M(node, variables)

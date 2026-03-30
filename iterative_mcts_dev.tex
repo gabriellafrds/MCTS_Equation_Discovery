@@ -92,4 +92,90 @@ In benchmarking against the standard Damped Harmonic Oscillator data ($dx/dt = -
 
 This represents an astounding $\approx \mathbf{50\times}$ algorithmic speedup, guaranteeing the hybrid architecture is structurally prepared to scale up to massive, $p \gg n$ multivariate dynamical networks.
 
+\section{Complex Benchmarking and the Limits of SINDy}
+
+With the core mechanics of Iterative MCTS and SHUSS optimized, the system was stress-tested against increasingly difficult non-linear autonomous systems that standard PySINDy (using baseline polynomial library expansions) inherently struggles with.
+
+\subsection{Lorenz Attractor Convergence}
+The system was benchmarked against the $z$-dimension dynamics of the 3D chaotic Lorenz Attractor ($dz/dt = x \cdot y - 2.66 \cdot z$). Given the non-linear coupling of $x \cdot y$, standard regression heavily overfits unless sparsity is explicitly mandated. 
+
+The MCTS-SINDy model natively and rapidly decomposed the vector field. By sequentially locking the $(x \cdot y)$ sequence and then independently solving for $z$, the iterative loop completely reconstructed the chaotic system while ignoring purely polynomial distractors.
+
+\subsection{The Deep Nesting Boundary (Curse of Dimensionality)}
+To fully identify the theoretical boundaries of the hybrid architecture, an automated grid search spanning 128 hyperparameter configurations was conducted against a synthetic, highly non-linear benchmark:
+\begin{equation}
+    \dot{y} = x + \sin(x^2 \cdot z \cdot y) + \cos(\sin(z \cdot y))
+\end{equation}
+
+In standard execution, the model almost exclusively failed to identify the true compound terms, instead aggressively locking onto a Taylor-series-esque approximation: $[exp(x), x, y, x^2]$. 
+
+This exposed the mathematical boundary of the current rollout mechanics:
+\begin{enumerate}
+    \item \textbf{Extreme Derivation Depth}: To construct the valid node for $\sin(x^2 \cdot z \cdot y)$, the MCTS grammar must execute a precise, uninterrupted sequence of approximately 9 to 10 context-free production rules. In an unguided random walk, the probability of sampling this exact trajectory crashes exponentially towards zero.
+    \item \textbf{The SHUSS Blindspot}: Sequential Halving violently prunes branches that fail to provide immediate SINDy rewards (MSE reduction). However, a partially formed nested equation (e.g., $AST = \sin(x^2 \dots)$) often yields \textit{worse} intermediate residuals than a simple linear proxy like $x$. Thus, SHUSS confidently deletes the optimal mathematical pathway early in the search tree before it has organically formed the internal $z \cdot y$ coupling.
+\end{enumerate}
+
+\subsection{Stochastic Success and the Need for Neural Priors}
+Remarkably, a specific configuration within the grid search (\texttt{budget=20, episodes=1000}) successfully identified the exact, perfect equation. However, reproducing the result demonstrated massive variance.
+
+This firmly proved that while the Iterative MCTS-SINDy architecture is fully capable of escaping local minima bounding standard regression, extreme nested compositions rely entirely on \textbf{Monte Carlo Lottery / Stochastic Luck}. To make this model thoroughly deterministic against arbitrary nesting depth—without scaling the compute budget asymptotically—the Uniform Random selection within SHUSS must be functionally replaced by a \textbf{Graph Neural Network (GNN) Policy Prior} trained to recognize physical invariance and guide the rollout generator tree.
+
+\section*{Appendix A: Running the Model}
+
+The finalized Iterative MCTS-SINDy model is entirely self-contained within \texttt{main.py} and serves as the primary entry point for experimental runs.
+
+\subsection*{A.1 Environment Setup}
+Before running the models, establish a clean environment and install strictly required physics dependencies (PySINDy requires standard linear algebra and SciPy modules). Execute the following concrete terminal commands from the project root:
+\begin{minted}{bash}
+# 1. (Optional) Create a virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# 2. Install SINDy and mathematical cores
+pip install numpy scipy pysindy matplotlib pandas
+\end{minted}
+
+\subsection*{A.2 Setting Target Physics}
+By default, the script generates synthetic physical data. To swap the active environment (e.g., Harmonic Oscillator, Lorenz Attractor, or the Complex nested benchmark), locate the \texttt{generate\_data} binding in \texttt{main.py}:
+\begin{minted}{python}
+data = generate_data_harmonic_oscillator(
+    n_points=config["n_points"], 
+    noise=config["noise"]
+)
+\end{minted}
+Other predefined targets exist within \texttt{data\_generators.py}. Import and swap the target function to evaluate different dynamical bounds.
+
+\subsection*{A.3 Configuring Search Parameters}
+The entire search envelope is driven by the \texttt{config} dictionary at the top of \texttt{main()}:
+\begin{minted}{python}
+config = {
+    "n_episodes"    : 1000,   # Total UCT exploration runs
+    "n_simulations" : 20,     # SHUSS bandit budget
+    "t_max"         : 15,     # Maximum tree depth
+    "c"             : 0.5,    # UCT exploration constant
+    "gamma"         : 0.005,  # BIC exponential decay scaling
+    "alpha"         : 0.5,    # Active structural complexity penalty
+    "beta"          : 0.0,    # Unused capacity penalty
+    "noise"         : 0.0,    # Synthetic Gaussian noise added to y_dot
+    "n_points"      : 500,    # Length of target data series
+}
+\end{minted}
+For highly complex, nested equations, scaling \texttt{n\_episodes} and \texttt{n\_simulations} is mandatory to offset the search space explosion.
+
+\subsection*{A.4 Execution Sequences}
+To execute the standard iterative discovery pipeline on the currently loaded data generator, run the entry point script:
+\begin{minted}{bash}
+python main.py
+\end{minted}
+
+The terminal will continuously print the outcome of every sequential iteration, identifying each discovered feature sequence, its partial combined BIC, and strictly declaring Occam's Razor termination upon completion.
+
+\vspace{0.5cm}
+\noindent \textbf{Grid Search Automation (Stress Testing)}:\\
+To empirically evaluate the search capacity boundary (as detailed in Section 5), a headless automated hyperparameter grid search script is provided. It loops across massive combinations of $UCT \times SHUSS$ variables. To execute this block matrix:
+\begin{minted}{bash}
+python grid_search.py
+\end{minted}
+This execution will aggressively intercept standard outputs and continuously append testing results (including the final AST strings, BICs, and MSE metrics) to \texttt{grid\_search\_results.csv} within the active directory.
+
 \end{document}

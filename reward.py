@@ -11,15 +11,13 @@ def compute_reward(sequence, data, grammar, gamma=0.01, alpha=0.005, beta=0.05):
     Compute the reward for a complete sequence of production rules.
 
     This implements the BIC-based exponential decay reward:
-        R_final = exp(-gamma * BIC) * [1 / (1 + alpha*C_active + beta*C_unused)]
+        R_final = exp(-gamma * BIC) / (1 + alpha * C_grammar)
     
     where:
-    where:
         BIC = n_points * ln(MSE) + ||Xi||_0 * ln(n_points)
-        C_active is the number of nodes making up the newly generated feature if it has a non-zero coefficient.
-        C_unused is the number of nodes making up the newly generated feature if it has a zero coefficient.
+        C_grammar is the total grammatical length of the newly generated feature.
     """
-def compute_reward(sequence, data, grammar, locked_features_cols=None, gamma=0.01, alpha=0.005, beta=0.05):
+def compute_reward(sequence, data, grammar, locked_features_cols=None, gamma=0.01, alpha=0.005):
     if locked_features_cols is None:
         locked_features_cols = []
         
@@ -50,26 +48,10 @@ def compute_reward(sequence, data, grammar, locked_features_cols=None, gamma=0.0
     exp_arg = np.clip(-gamma * bic, -700, 700)
     exp_decay = np.exp(exp_arg)
 
-    # Calculate structural complexity of the newly proposed feature
-    features = extract_features_from_tree(tree)
-    flat_coefs = np.ravel(coefs) if len(coefs) > 0 else []
+    # Calculate total structural complexity of the newly proposed feature
+    c_grammar = count_nodes(tree)
+    complexity_penalty = 1.0 / (1.0 + alpha * c_grammar)
     
-    c_active = 0
-    c_unused = 0
-    
-    # The new feature is always appended at the end of the locked features matrix
-    new_feature_idx = len(locked_features_cols)
-    
-    for _, f_node in enumerate(features): # Should only be 1 feature based on new grammar
-        complexity = count_nodes(f_node)
-        
-        # Check if STLSQ zeroed out this newly proposed feature
-        if new_feature_idx < len(flat_coefs) and abs(flat_coefs[new_feature_idx]) > 1e-5:
-            c_active += complexity
-        else:
-            c_unused += complexity
-
-    complexity_penalty = 1.0 / (1.0 + (alpha * c_active) + (beta * c_unused))
     reward = exp_decay * complexity_penalty
 
     return reward

@@ -1,0 +1,242 @@
+{
+    "Damped Harmonic Oscillator": {
+        "Noise_0%": {
+            "PySINDy": {
+                "compute_time_sec": 0.015,
+                "parsimony": 2,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x0': -0.10000000000000009, 'x1': 2.000000000000001}",
+                "final_mse": 4.953560428218239e-31
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.58,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'y': 2.0063}",
+                "final_mse": 0.0021759639987260974
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 1.89,
+                "parsimony": 2,
+                "exact_discovery": true,
+                "coefficient_rmse": 0.000662,
+                "final_equation": "{'y': 1.999063843848682, 'x': -0.1000123093744486}",
+                "final_mse": 1.8702048253312946e-07
+            }
+        },
+        "Noise_1%": {
+            "PySINDy": {
+                "compute_time_sec": 0.004,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x0': -0.09883385909103337, 'x1': 1.9960168559047462, 'sin(1 x1)': 0.003242624820157358}",
+                "final_mse": 7.812639510443226e-05
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.76,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'y': 2.0053}",
+                "final_mse": 0.0022037481092318117
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 2.14,
+                "parsimony": 2,
+                "exact_discovery": true,
+                "coefficient_rmse": 0.00157,
+                "final_equation": "{'y': 1.9981012314467899, 'x': -0.098849191149626}",
+                "final_mse": 7.831643221150193e-05
+            }
+        },
+        "Noise_5%": {
+            "PySINDy": {
+                "compute_time_sec": 0.01,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x0': -0.09416929545516663, 'x1': 1.9800842795237323, 'sin(1 x1)': 0.01621312410078346}",
+                "final_mse": 0.0019531598776108073
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.92,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'y': 2.0012}",
+                "final_mse": 0.0038833689393320808
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 2.18,
+                "parsimony": 2,
+                "exact_discovery": true,
+                "coefficient_rmse": 0.005776,
+                "final_equation": "{'y': 1.9942507818392143, 'x': -0.09419671825033588}",
+                "final_mse": 0.0019534258610598215
+            }
+        }
+    },
+    "Lorenz Attractor Z-axis": {
+        "Noise_0%": {
+            "PySINDy": {
+                "compute_time_sec": 0.006,
+                "parsimony": 2,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x2': -2.666666666666664, 'x0 x1': 0.9999999999999994}",
+                "final_mse": 1.6838874999275727e-27
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 1.0,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'(y * y)': 0.2975}",
+                "final_mse": 1335.671230393836
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 3.83,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 2.5e-05,
+                "final_equation": "{'(y * y)': 0.0, 'z': -2.666665337704338, '(y * x)': 0.999999646083173}",
+                "final_mse": 3.8978144537034287e-10
+            }
+        },
+        "Noise_1%": {
+            "PySINDy": {
+                "compute_time_sec": 0.005,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x2': -2.6686399981874467, 'x0 x1': 1.000533347068329, 'cos(1 x1)': 0.08716058420662623}",
+                "final_mse": 0.20942982765437443
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 1.03,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'(y * y)': 0.2976}",
+                "final_mse": 1336.749407740811
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 4.03,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.000837,
+                "final_equation": "{'(y * y)': 0.0, 'z': -2.6678371888346137, '(x * y)': 1.000329286866616}",
+                "final_mse": 0.2131249748338812
+            }
+        },
+        "Noise_5%": {
+            "PySINDy": {
+                "compute_time_sec": 0.007,
+                "parsimony": 6,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'x2': -2.674415847779208, 'x0 x1': 1.0022969102896133, 'sin(1 x0)': 0.09944690318623915, 'cos(1 x1)': 0.4253802783248661, 'sin(1 x2)': 0.12404450846061504, 'cos(1 x2)': 0.1276177891558521}",
+                "final_mse": 5.214143085978412
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 1.18,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'(y * y)': 0.2979}",
+                "final_mse": 1345.3286525250132
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 4.09,
+                "parsimony": 3,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.00428,
+                "final_equation": "{'(y * y)': 0.0, 'z': -2.672524593355721, '(x * y)': 1.0016478500003891}",
+                "final_mse": 5.328124361485567
+            }
+        }
+    },
+    "Deep Nested Bound": {
+        "Noise_0%": {
+            "PySINDy": {
+                "compute_time_sec": 0.005,
+                "parsimony": 10,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'1': 38.58449017478284, 'x0': 14.983424316963593, 'x1': -0.04860859886984903, 'x0^2': -20.935882919263317, 'x0 x2': 0.4640231204896225, 'sin(1 x0)': -15.58515590005422, 'cos(1 x0)': -38.22685225510022, 'sin(1 x1)': 0.05624393390935212, 'cos(1 x1)': -0.22571762058054468, 'cos(1 x2)': -0.2425844278632523}",
+                "final_mse": 2.7463477714156733e-05
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.57,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'x': -0.8356}",
+                "final_mse": 0.0006282665345745377
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 4.93,
+                "parsimony": 2,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.017818,
+                "final_equation": "{'x': -0.9821816702598702, '(y * (exp(z) * (z * x)))': 0.25424473766371}",
+                "final_mse": 6.525829985489553e-06
+            }
+        },
+        "Noise_1%": {
+            "PySINDy": {
+                "compute_time_sec": 0.008,
+                "parsimony": 10,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'1': 39.596333715251234, 'x0': 16.3255396461536, 'x1': -0.048318194990402796, 'x0^2': -21.704543426819424, 'x0 x2': 0.5081483910560056, 'sin(1 x0)': -16.870302251664974, 'cos(1 x0)': -39.23510346279032, 'sin(1 x1)': 0.05624111055912828, 'cos(1 x1)': -0.22752650501109173, 'cos(1 x2)': -0.24575421094308947}",
+                "final_mse": 3.0455465719032812e-05
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.57,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'x': -0.8357}",
+                "final_mse": 0.0006379523654885042
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 4.43,
+                "parsimony": 2,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.016972,
+                "final_equation": "{'x': -0.9830275599875847, '((x * exp(z)) * (z * y))': 0.2556227689647273}",
+                "final_mse": 9.58556277155838e-06
+            }
+        },
+        "Noise_5%": {
+            "PySINDy": {
+                "compute_time_sec": 0.004,
+                "parsimony": 10,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.0,
+                "final_equation": "{'1': 43.64370787712466, 'x0': 21.694000962914018, 'x1': -0.04715657947264529, 'x0^2': -24.77918545704385, 'x0 x2': 0.6846494733215502, 'sin(1 x0)': -22.010887658108388, 'cos(1 x0)': -43.26810829355056, 'sin(1 x1)': 0.0562298171582466, 'cos(1 x1)': -0.23476204273332169, 'cos(1 x2)': -0.25843334326248835}",
+                "final_mse": 0.00010218002101431061
+            },
+            "SPL_Proxy": {
+                "compute_time_sec": 0.56,
+                "parsimony": 1,
+                "exact_discovery": false,
+                "coefficient_rmse": Infinity,
+                "final_equation": "{'x': -0.8358}",
+                "final_mse": 0.0007372769694391018
+            },
+            "MCTS_SINDy": {
+                "compute_time_sec": 8.26,
+                "parsimony": 2,
+                "exact_discovery": false,
+                "coefficient_rmse": 0.011743,
+                "final_equation": "{'x': -0.9882569580960093, '(((x * sin(y)) * z) * exp(z))': 0.2779032430493062}",
+                "final_mse": 7.889958330917679e-05
+            }
+        }
+    }
+}

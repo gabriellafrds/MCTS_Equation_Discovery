@@ -48,7 +48,7 @@ class MCTSNode:
         self.Q += (reward - self.Q) / self.N
 
 class MCTS:
-    def __init__(self, grammar, data, locked_features_cols=None, c=1.0, n_simulations=10, t_max=50, gamma=0.01, alpha=0.005, beta=0.05):
+    def __init__(self, grammar, data, locked_features_cols=None, c=1.0, n_simulations=10, t_max=50, gamma=0.01, alpha=0.005):
         if locked_features_cols is None:
             locked_features_cols = []
         self.locked_features_cols = locked_features_cols
@@ -60,7 +60,6 @@ class MCTS:
         self.t_max = t_max  # maximum sequence length allowed
         self.gamma = gamma
         self.alpha = alpha
-        self.beta = beta
 
         self.best_reward = 0.0  # best raw reward found so far across all episodes
         self.best_sequence = None  # sequence of rules that gave the best reward
@@ -137,7 +136,7 @@ class MCTS:
             r = compute_reward(
                 node.state, self.data, self.grammar, 
                 locked_features_cols=self.locked_features_cols,
-                gamma=self.gamma, alpha=self.alpha, beta=self.beta
+                gamma=self.gamma, alpha=self.alpha
             )
             if r > self.global_max_reward:
                 self.global_max_reward = r
@@ -183,7 +182,7 @@ class MCTS:
                         r = compute_reward(
                             seq, self.data, self.grammar, 
                             locked_features_cols=self.locked_features_cols,
-                            gamma=self.gamma, alpha=self.alpha, beta=self.beta
+                            gamma=self.gamma, alpha=self.alpha
                         )
 
                         # Update global max before scaling

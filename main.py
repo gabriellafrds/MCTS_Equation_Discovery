@@ -4,7 +4,8 @@ from grammar import get_valid_actions, is_complete, RULES
 from tree import build_tree_step_by_step, extract_features_from_tree
 from evaluate import evaluate_tree_sindy
 from mcts import MCTS
-from data_generators import lorenz_xdot, nonlinear_three_var, complex_three_var
+from data_generators import lorenz_xdot, nonlinear_three_var, complex_three_var, very_complex_three_var
+import pysindy as ps
 
 # ---------------------------------------------------------------------------
 # Data generation (Harmonic Oscillator Benchmark)
@@ -111,23 +112,22 @@ def print_final_equation(locked_features_strings, locked_features_cols, y_dot):
 def main(config = None):
     if config is None:
         config = {
-            "n_episodes"    : 100,    # SHUSS provides exceptional guidance, we barely need UCT episodes!
-            "n_simulations" : 40,     # SHUSS Budget (Must be large enough to split across Halving rounds)
-            "t_max"         : 10,     # Maximum sequence length (single features rarely exceed 10)
-            "c"             : 1.0,    # UCT exploration constant
-            "gamma"         : 0.005,  # BIC exponential decay
-            "alpha"         : 1.0,    # Massive structural capacity penalty
-            "beta"          : 0.1,    # Unused penalty (less relevant for single features)
-            "noise"         : 0.0,    # Noise level on target data
-            "n_points"      : 1000,   # High point count for good sparse regression
+            "n_episodes"    : 1000,   
+            "n_simulations" : 20,     
+            "t_max"         : 15,     
+            "c"             : 0.5,    
+            "gamma"         : 0.005,  
+            "alpha"         : 0.5,    
+            "noise"         : 0.0,    
+            "n_points"      : 500,   
         }
 
     print("Symbolic Physics Learner — Dynamic PySINDy Integration")
     print(f"Using config: {config}")
-    print("Target: Harmonic oscillator dx/dt = -0.1*x + y")
+    print("Target: very_complex_three_var: y_dot = 1.0*x + 1.0*sin((((x * x) * z) * y)) + 1.0*cos(sin((z * y)))")
     print(f"Episodes        : {config['n_episodes']}")
     
-    data = generate_data_harmonic_oscillator(n_points=config["n_points"], noise=config["noise"])
+    data = very_complex_three_var(n_points=config["n_points"], noise=config["noise"])
 
     import types
     grammar = types.SimpleNamespace(
@@ -141,7 +141,7 @@ def main(config = None):
     locked_features_cols = []
     locked_features_strings = []
     best_global_bic = float('inf')
-    max_features = 5
+    max_features = 10
     
     for iteration in range(max_features):
         print(f"\n--- Iteration {iteration+1}/{max_features} ---")
@@ -153,8 +153,7 @@ def main(config = None):
             n_simulations=config["n_simulations"],
             t_max=config["t_max"],
             gamma=config["gamma"],
-            alpha=config["alpha"],
-            beta=config["beta"]
+            alpha=config["alpha"]
         )
 
         best_sequence, best_reward = agent.run(n_episodes=config["n_episodes"])
@@ -196,10 +195,13 @@ def main(config = None):
             
         # Heuristic 2: Occam's razor. If BIC drops significantly, accept it.
         # We require a massive threshold improvement to avoid noise adding useless terms.
-        # Since ln(x) explodes near 0, we require a significant jump.
         improvement_threshold = 10.0
+        
+        if abs(np.ravel(coefs)[-1]) < 1e-5:
+            print(f"-> REJECTED. SINDy assigned 0.0 to '{new_str}'.")
+            break
 
-        if bic <= best_global_bic - improvement_threshold or bic <= best_global_bic:
+        if bic <= best_global_bic - improvement_threshold:
             best_global_bic = bic
             locked_features_cols.append(new_col)
             locked_features_strings.append(new_str)
@@ -209,8 +211,23 @@ def main(config = None):
             print("-> Terminating search (Occam's razor).")
             break
 
-
     print_final_equation(locked_features_strings, locked_features_cols, data["y_dot"])
+
+    # Calculate final MSE from the locked features
+    if len(locked_features_cols) > 0:
+        Theta_final = np.column_stack(locked_features_cols)
+        optimizer = ps.STLSQ(threshold=0.1)
+        optimizer.fit(Theta_final, data["y_dot"])
+        y_pred = optimizer.predict(Theta_final)
+        final_mse = np.mean((data["y_dot"] - y_pred)**2)
+    else:
+        final_mse = float('inf')
+        
+    return {
+        "final_features": locked_features_strings,
+        "bic": best_global_bic,
+        "mse": final_mse
+    }
 
 
 if __name__ == "__main__":
