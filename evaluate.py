@@ -16,7 +16,7 @@ def evaluate_node(node, variables):
     if s == "z":
         return variables.get("z", np.zeros_like(variables["x"]))
 
-    if s in ("Feature", "M"):
+    if s == "M":
         return evaluate_M(node, variables)
 
     raise ValueError(f"Unknown generic symbol in tree: {s}")
