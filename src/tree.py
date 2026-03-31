@@ -1,4 +1,4 @@
-from grammar import RULES, NON_TERMINALS, TERMINALS
+from src.grammar import RULES, NON_TERMINALS, TERMINALS
 
 class Node:
     def __init__(self, symbol):

@@ -1,6 +1,6 @@
 import itertools
 import pandas as pd
-from main import main
+from src.main import main
 import os
 
 def run_grid_search():
@@ -49,7 +49,7 @@ def run_grid_search():
 
     # Save results
     df = pd.DataFrame(results)
-    output_file = "grid_search_very_complex_results.csv"
+    output_file = "results/results/grid_search_very_complex_results.csv"
     df.to_csv(output_file, index=False)
     print(f"\nGrid search complete. Results saved to {output_file}")
 

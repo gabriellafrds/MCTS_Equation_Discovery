@@ -6,12 +6,12 @@ import copy
 import pysindy as ps
 from itertools import product as iproduct
 
-from mcts import MCTS
-from tree import build_tree_step_by_step, extract_features_from_tree
-from grammar import get_valid_actions, is_complete, RULES
-from main import sequence_to_library_strings, evaluate_locked_dictionary
-from evaluate import evaluate_node, evaluate_tree_sindy
-from data_generators import damped_harmonic_oscillator_rk45, lorenz_attractor_rk45, deep_nested_rk45
+from src.mcts import MCTS
+from src.tree import build_tree_step_by_step, extract_features_from_tree
+from src.grammar import get_valid_actions, is_complete, RULES
+from src.main import sequence_to_library_strings, evaluate_locked_dictionary
+from src.evaluate import evaluate_node, evaluate_tree_sindy
+from utils.data_generators import damped_harmonic_oscillator_rk45, lorenz_attractor_rk45, deep_nested_rk45
 
 
 # ---------------------------------------------------------------------------
@@ -360,10 +360,10 @@ def run_pipeline():
             }
 
             # Incremental save so nothing is lost
-            with open("benchmark_results.json", "w") as f:
+            with open("results/results/benchmark_results.json", "w") as f:
                 json.dump(results_matrix, f, indent=4)
 
-    print("\n\nBenchmark Suite Complete — results saved to benchmark_results.json")
+    print("\n\nBenchmark Suite Complete — results saved to results/results/benchmark_results.json")
 
 
 if __name__ == "__main__":

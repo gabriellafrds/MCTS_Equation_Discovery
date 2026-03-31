@@ -1,8 +1,8 @@
 import numpy as np
-from tree import build_tree_step_by_step
-from evaluate import evaluate_tree_sindy
-from reward import compute_reward
-import grammar
+from src.tree import build_tree_step_by_step
+from src.evaluate import evaluate_tree_sindy
+from src.reward import compute_reward
+import src.grammar as grammar
 
 def test():
     print("Testing Grammar...")

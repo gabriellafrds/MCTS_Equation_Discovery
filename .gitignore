@@ -22,9 +22,7 @@ env/
 .idea/
 
 # artefacts
-*.tex
 *.aux
 *.out
 *.log
-*.bib
-*.pdf
+*.toc

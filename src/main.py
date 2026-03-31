@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.integrate import odeint
-from grammar import get_valid_actions, is_complete, RULES
-from tree import build_tree_step_by_step, extract_features_from_tree
-from evaluate import evaluate_tree_sindy
-from mcts import MCTS
-from data_generators import lorenz_xdot, nonlinear_three_var, complex_three_var, very_complex_three_var
+from src.grammar import get_valid_actions, is_complete, RULES
+from src.tree import build_tree_step_by_step, extract_features_from_tree
+from src.evaluate import evaluate_tree_sindy
+from src.mcts import MCTS
+from utils.data_generators import lorenz_xdot, nonlinear_three_var, complex_three_var, very_complex_three_var
 import pysindy as ps
 
 # ---------------------------------------------------------------------------

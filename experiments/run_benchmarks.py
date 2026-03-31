@@ -2,12 +2,12 @@ import sys
 import numpy as np
 import copy
 import types
-from mcts import MCTS
-from tree import build_tree_step_by_step, extract_features_from_tree
-from grammar import get_valid_actions, is_complete, RULES
-from main import sequence_to_library_strings, print_final_equation, evaluate_locked_dictionary
-from evaluate import evaluate_node, evaluate_tree_sindy
-from data_generators import very_complex_three_var
+from src.mcts import MCTS
+from src.tree import build_tree_step_by_step, extract_features_from_tree
+from src.grammar import get_valid_actions, is_complete, RULES
+from src.main import sequence_to_library_strings, print_final_equation, evaluate_locked_dictionary
+from src.evaluate import evaluate_node, evaluate_tree_sindy
+from utils.data_generators import very_complex_three_var
 
 # Explicitly defining the Report Benchmarks
 def damped_harmonic_oscillator(n_points=500, noise=0.0):

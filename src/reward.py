@@ -1,6 +1,6 @@
 import numpy as np
-from tree import build_tree_step_by_step, extract_features_from_tree, count_nodes
-from evaluate import evaluate_tree_sindy
+from src.tree import build_tree_step_by_step, extract_features_from_tree, count_nodes
+from src.evaluate import evaluate_tree_sindy
 
 # ---------------------------------------------------------------------------
 # Reward function (BIC-based)

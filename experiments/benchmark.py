@@ -1,10 +1,10 @@
 import csv
 import itertools
 import copy
-from main import main as run_main  # Assure-toi que main.py a la fonction main paramétrable
-from main import print_final_equation, sequence_to_library_strings, evaluate_locked_dictionary, complex_three_var, MCTS
-from tree import build_tree_step_by_step, extract_features_from_tree
-from grammar import get_valid_actions, is_complete, RULES
+from src.main import main as run_main  # Assure-toi que main.py a la fonction main paramétrable
+from src.main import print_final_equation, sequence_to_library_strings, evaluate_locked_dictionary, complex_three_var, MCTS
+from src.tree import build_tree_step_by_step, extract_features_from_tree
+from src.grammar import get_valid_actions, is_complete, RULES
 import types
 import numpy as np
 
@@ -129,7 +129,7 @@ configs = [dict(zip(keys, v)) for v in itertools.product(*values)]
 # ---------------------------------------------------------------------------
 # Boucle sur toutes les combinaisons et sauvegarde CSV
 # ---------------------------------------------------------------------------
-output_file = "experiment_results_complex_three_var.csv"
+output_file = "results/results/experiment_results_complex_three_var.csv"
 with open(output_file, mode="w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["config", "locked_features", "mse", "bic", "formula"])
     writer.writeheader()

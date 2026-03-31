@@ -1,6 +1,6 @@
 import numpy as np
 import pysindy as ps
-from tree import extract_features_from_tree
+from src.tree import extract_features_from_tree
 
 # ---------------------------------------------------------------------------
 # Feature evaluation

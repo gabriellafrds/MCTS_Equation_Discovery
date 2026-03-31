@@ -1,7 +1,7 @@
 import math
 import random
-from grammar import RULES, NON_TERMINALS
-from reward import compute_reward, scale_reward
+from src.grammar import RULES, NON_TERMINALS
+from src.reward import compute_reward, scale_reward
 
 class MCTSNode:
     def __init__(self, state, parent=None):
