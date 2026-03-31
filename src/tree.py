@@ -1,4 +1,4 @@
-from src.grammar import RULES, NON_TERMINALS, TERMINALS
+from src.grammar import NON_TERMINALS
 
 class Node:
     def __init__(self, symbol):
@@ -6,11 +6,11 @@ class Node:
         self.children = []
 
     def is_terminal(self):
-        # A node is terminal if its symbol is not a non-terminal
+        # a node is terminal if its symbol is not a non-terminal
         return self.symbol not in NON_TERMINALS
 
     def is_complete(self):
-        # A node is complete if it is terminal and all its children are complete
+        # a node is complete if it is terminal and all its children are complete
         if not self.is_terminal():
             return False
         return all(c.is_complete() for c in self.children)
@@ -22,7 +22,7 @@ def build_tree_step_by_step(sequence_of_rules):
     Each rule is a tuple (left_side, right_side), e.g. ("M", ["M", "*", "M"]).
     This is the format used by mcts.py and grammar.py.
 
-    Example:
+    example:
         sequence_of_rules = [
             ("f", ["M"]),
             ("M", ["M", "*", "M"]),
@@ -39,49 +39,39 @@ def build_tree_step_by_step(sequence_of_rules):
             break
 
         current_node = stack.pop(0)
+        
+        # Instantiate children directly
+        new_children = [Node(symbol) for symbol in right]
+        current_node.children.extend(new_children)
 
-        non_terminal_children = []
-        for symbol in right:  # iterate over the right side of the rule
-            child = Node(symbol)
-            current_node.children.append(child)
-            if symbol in NON_TERMINALS:
-                non_terminal_children.append(child)
-
-        # Insert in reverse order so the leftmost child ends up on top
-        for child in reversed(non_terminal_children):
-            stack.insert(0, child)
+        # Prepend new non-terminal sub-nodes to the expansion stack
+        stack[:0] = [child for symbol, child in zip(right, new_children) if symbol in NON_TERMINALS]
 
     return root
 
 
 def extract_features_from_tree(node):
     """
-    Extract a list of Feature nodes from a Library tree.
+    Extract all Feature nodes logically from a generalized Library AST.
     """
     features = []
     
-    if node.symbol == "f":
-        if node.children:
-            return extract_features_from_tree(node.children[0])
+    if node.symbol == "f" and node.children:
+        return extract_features_from_tree(node.children[0])
             
     elif node.symbol == "Library":
-        # Library -> Feature
-        # or Library -> Feature, Library
         if node.children:
             features.extend(extract_features_from_tree(node.children[0])) # The Feature
         if len(node.children) > 1:
             features.extend(extract_features_from_tree(node.children[1])) # The rest of the Library
             
-    elif node.symbol == "Feature":
-        # The child of Feature is M, which represents the math expression tree
-        if node.children:
-            features.append(node.children[0])
+    elif node.symbol == "Feature" and node.children:
+        features.append(node.children[0])
             
     return features
 
 def count_nodes(node):
     """
-    Recursively count the total number of rule nodes comprising a mathematical structure.
-    Used for calculating structural complexity C_active and C_unused.
+    Recursively count the total number of rule modules in an AST.
     """
     return 1 + sum(count_nodes(child) for child in node.children)

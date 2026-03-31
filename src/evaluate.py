@@ -2,19 +2,25 @@ import numpy as np
 import pysindy as ps
 from src.tree import extract_features_from_tree
 
-# ---------------------------------------------------------------------------
-# Feature evaluation
-# ---------------------------------------------------------------------------
+UNARY_OPS = {
+    "sin": np.sin,
+    "cos": np.cos,
+    "exp": lambda x: np.exp(np.clip(x, -100, 100))
+}
+
+BINARY_OPS = {
+    "*": np.multiply
+}
 
 def evaluate_node(node, variables):
+    """
+    Map AST nodes to physical data vectors.
+    """
     s = node.symbol
 
-    if s == "x":
-        return variables["x"]
-    if s == "y":
-        return variables.get("y", np.zeros_like(variables["x"]))
-    if s == "z":
-        return variables.get("z", np.zeros_like(variables["x"]))
+    if s in ["x", "y", "z"]:
+        # safe default to zeros if the data array lacks that dimension
+        return variables.get(s, np.zeros_like(variables["x"]))
 
     if s == "M":
         return evaluate_M(node, variables)
@@ -23,66 +29,53 @@ def evaluate_node(node, variables):
 
 def evaluate_M(node, variables):
     """
-    Evaluate an M node which can be a unary or binary operator.
+    Evaluate structural mathematical nodes via operator dispatch.
     """
     children = node.children
     if not children:
         raise ValueError(f"Node has no children: {node.symbol}")
 
-    if len(children) == 1:
+    n_children = len(children)
+    
+    if n_children == 1:
         return evaluate_node(children[0], variables)
 
-    if len(children) == 2:
-        op  = children[0].symbol
+    if n_children == 2:
+        op = children[0].symbol
         arg = evaluate_node(children[1], variables)
-        if op == "sin": return np.sin(arg)
-        if op == "cos": return np.cos(arg)
-        if op == "exp": return np.exp(np.clip(arg, -100, 100))
+        if op in UNARY_OPS:
+            return UNARY_OPS[op](arg)
         raise ValueError(f"Unknown unary operator: {op}")
 
-    if len(children) == 3:
-        left  = evaluate_node(children[0], variables)
-        op    = children[1].symbol
+    if n_children == 3:
+        left = evaluate_node(children[0], variables)
+        op = children[1].symbol
         right = evaluate_node(children[2], variables)
-        if op == "*": return left * right
+        if op in BINARY_OPS:
+            return BINARY_OPS[op](left, right)
         raise ValueError(f"Unknown binary operator: {op}")
 
-    raise ValueError(f"Unexpected number of children: {len(children)}")
-
-
-# ---------------------------------------------------------------------------
-# SINDy Integration Core
-# ---------------------------------------------------------------------------
+    raise ValueError(f"Unexpected number of children: {n_children}")
 
 def evaluate_tree_sindy(root_node, variables, y_dot, locked_features_cols=None):
     """
-    Extracts the newly generated feature from the MCTS tree. Combines it with
-    any previously 'locked' feature columns, and computes the sparse regression
-    using STLSQ on the combined dictionary.
-    
-    Returns:
-        mse: Mean Squared Error of the SINDy model prediction
-        coefs: Solved STLSQ coefficients array
+    Compile AST into numeric vectors and resolve SINDy STLSQ sparse constants.
     """
-    if locked_features_cols is None:
-        locked_features_cols = []
-        
+    locked_features_cols = locked_features_cols or []
     features = extract_features_from_tree(root_node)
     
     # If the tree generated no valid features
     if not features:
         return 1e10, []
 
-    theta_cols = []
-    
-    # Extract the length of the data to expand scalar features properly
-    # Get any active variable to check shape
+    # Map the current data vector shape
     x_shape = variables.get("x", np.array([0.0])).shape[0]
 
+    theta_cols = []
     for f_node in features:
         val = evaluate_node(f_node, variables)
         
-        # Handle scalar (e.g. if the grammar generated a constant term indirectly somehow)
+        # handle scalar (example if the grammar generated a constant term indirectly somehow)
         if np.isscalar(val):
             val = np.full(x_shape, val)
         else:
@@ -97,8 +90,8 @@ def evaluate_tree_sindy(root_node, variables, y_dot, locked_features_cols=None):
         
     Theta = np.column_stack(all_cols)
     
-    # Initialize the core SINDy STLSQ optimizer
-    # Threshold must be < 0.1 because our true physics constant is -0.1
+    # init the core SINDy STLSQ optimizer
+    # threshold < 0.1 because our true physics constant is -0.1
     optimizer = ps.STLSQ(threshold=0.05, alpha=0.05)
     
     try:
@@ -110,4 +103,4 @@ def evaluate_tree_sindy(root_node, variables, y_dot, locked_features_cols=None):
     y_pred = optimizer.predict(Theta)
     mse = np.mean((y_pred.flatten() - y_dot) ** 2)
     
-    return mse, optimizer.coef_
+    return float(mse), optimizer.coef_
