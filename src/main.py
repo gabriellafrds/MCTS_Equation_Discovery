@@ -29,7 +29,7 @@ def evaluate_locked_dictionary(locked_features_cols, y_dot):
         return 1e10, []
         
     Theta = np.column_stack(locked_features_cols)
-    optimizer = ps.STLSQ(threshold=0.05, alpha=0.05)
+    optimizer = ps.STLSQ(threshold=0.01, alpha=0.01)
     try:
         optimizer.fit(Theta, y_dot)
         y_pred = optimizer.predict(Theta)

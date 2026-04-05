@@ -67,7 +67,10 @@ def extract_features_from_tree(node):
             
     elif node.symbol == "Feature" and node.children:
         features.append(node.children[0])
-            
+        
+    elif node.symbol == "M":
+        features.append(node)
+        
     return features
 
 def count_nodes(node):

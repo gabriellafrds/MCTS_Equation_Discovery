@@ -1,0 +1,171 @@
+{
+    "x": {
+        "discovered_equation": {
+            "y": -1.004645609689546,
+            "((z * z) * x)": -0.01601967918116073,
+            "(x * cos(z))": 0.05754954533543909,
+            "sin(z)": 0.019619521554431734
+        },
+        "target_truth": {
+            "x": 0.1,
+            "y": -1.0,
+            "(x * z)": -0.1
+        },
+        "parsimony": 4,
+        "exact_match": false,
+        "coef_rmse": null,
+        "time_seconds": 30.87,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "y",
+                "bic": -1384.2612238740614,
+                "mse": 0.06197949565080769,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "((z * z) * x)",
+                "bic": -3243.3355435735693,
+                "mse": 0.0014862048044466225,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 3,
+                "proposed_feature": "(x * cos(z))",
+                "bic": -3970.018165216622,
+                "mse": 0.00034315648888573626,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 4,
+                "proposed_feature": "sin(z)",
+                "bic": -4098.1666992981945,
+                "mse": 0.00026229250034894073,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 5,
+                "proposed_feature": "x",
+                "bic": -4098.1666992981945,
+                "mse": 0.00026229250034894073,
+                "accepted": false,
+                "reason": "Duplicate or Zero Coef"
+            }
+        ]
+    },
+    "y": {
+        "discovered_equation": {
+            "x": 0.9996582176955462,
+            "(y * z)": -0.09989819113133057,
+            "y": 0.09925613785938313
+        },
+        "target_truth": {
+            "x": 1.0,
+            "y": 0.1,
+            "(y * z)": -0.1
+        },
+        "parsimony": 3,
+        "exact_match": true,
+        "coef_rmse": 0.0004762741065187249,
+        "time_seconds": 10.03,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "x",
+                "bic": -1227.762380623395,
+                "mse": 0.08475809869673609,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "(y * z)",
+                "bic": -2627.1367459842095,
+                "mse": 0.005096853327077447,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 3,
+                "proposed_feature": "y",
+                "bic": -4552.1408393081265,
+                "mse": 0.00010711909263044719,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 4,
+                "proposed_feature": "z",
+                "bic": -4552.1408393081265,
+                "mse": 0.00010711909263044719,
+                "accepted": false,
+                "reason": "Duplicate or Zero Coef"
+            }
+        ]
+    },
+    "z": {
+        "discovered_equation": {
+            "((y * y) * x)": -0.9299993799828731,
+            "(y * (sin(z) * y))": -0.44244633724501864,
+            "x": -0.4298773597824983,
+            "z": -0.3144055478476846,
+            "((y * exp(x)) * y)": 0.3531342653018883
+        },
+        "target_truth": {
+            "z": -1.0,
+            "(x * x)": 1.0,
+            "(y * y)": 1.0
+        },
+        "parsimony": 5,
+        "exact_match": false,
+        "coef_rmse": null,
+        "time_seconds": 14.61,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "((y * y) * x)",
+                "bic": 294.1398284897905,
+                "mse": 1.7786425140269952,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "(y * (sin(z) * y))",
+                "bic": -229.77237426523655,
+                "mse": 0.6160647662715905,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 3,
+                "proposed_feature": "x",
+                "bic": -266.6775031323325,
+                "mse": 0.5651621177880971,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 4,
+                "proposed_feature": "z",
+                "bic": -281.0956965254887,
+                "mse": 0.5423150041825985,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 5,
+                "proposed_feature": "((y * exp(x)) * y)",
+                "bic": -583.2883466422982,
+                "mse": 0.29266613979289485,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            }
+        ]
+    }
+}

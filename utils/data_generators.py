@@ -198,3 +198,60 @@ def deep_nested_rk45(n_points=500, noise=0.0):
         x_dot += rng.normal(0, noise * np.std(x_dot), size=x_dot.shape)
         
     return {"variables": {"x": x, "y": y, "z": z}, "y_dot": x_dot}
+
+def colpitts_oscillator_rk45(n_points=1000, target='x', noise=0.0):
+    """
+     dimensionless mathematical model for the Colpitts Chaos Oscillator
+    x_dot = alpha * y
+    y_dot = -gamma * (x + z) - delta * y
+    z_dot = beta * (y - (1 - exp(-x)))
+    """
+    alpha = 5.0
+    beta = -1.0
+    gamma = 1.0
+    delta = 1.0
+
+    def deriv(t, state):
+        x, y, z = state
+        return [
+            alpha * y,
+            -gamma * (x + z) - delta * y,
+            beta * (y - (1.0 - np.exp(-x)))
+        ]
+        
+    n_per_traj = n_points // 5
+    t_eval = np.linspace(0, 10, n_per_traj)
+    trajs = []
+    
+    # We sample 5 distinct physics trajectories starting randomly off the attractor to generate
+    # rich transient variance, guaranteeing full dimensional uncoupling for SINDy.
+    ics = [
+        [0.1, 0.1, 0.0],
+        [1.0, -1.0, 2.0],
+        [-1.0, 2.0, -1.0],
+        [0.5, 0.5, 0.5],
+        [2.0, -2.0, 0.5]
+    ]
+    
+    for ic in ics:
+        sol = solve_ivp(deriv, [0, 10], ic, t_eval=t_eval, method='RK45')
+        trajs.append(sol.y)
+        
+    full_y = np.concatenate(trajs, axis=1)
+    x, y, z = full_y
+    
+    if target == 'x':
+        dot = alpha * y
+    elif target == 'y':
+        dot = -gamma * (x + z) - delta * y
+    elif target == 'z':
+        # expanded to cleanly isolate terms without parenthesis wrap offset issues for SINDy baseline evaluation
+        dot = beta * y - beta + beta * np.exp(-x)
+    else:
+        raise ValueError(f"Unknown target {target}")
+    
+    if noise > 0:
+        rng = np.random.default_rng(seed=42)
+        dot += rng.normal(0, noise * np.std(dot), size=dot.shape)
+        
+    return {"variables": {"x": x, "y": y, "z": z, "1": np.ones_like(x)}, "y_dot": dot}

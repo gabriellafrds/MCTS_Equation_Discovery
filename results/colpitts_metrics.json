@@ -1,0 +1,132 @@
+{
+    "x": {
+        "discovered_equation": {
+            "y": 4.999386883754069
+        },
+        "target_truth": {
+            "y": 5.0
+        },
+        "parsimony": 1,
+        "exact_match": true,
+        "coef_rmse": 0.0006131162459306339,
+        "time_seconds": 3.26,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "y",
+                "bic": -2996.8707381991753,
+                "mse": 0.0024635036543218104,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "x",
+                "bic": -2996.8707381991753,
+                "mse": 0.0024635036543218104,
+                "accepted": false,
+                "reason": "Duplicate or Zero Coef"
+            }
+        ]
+    },
+    "y": {
+        "discovered_equation": {
+            "x": -0.9993639537007746,
+            "z": -0.9991763073595169,
+            "y": -0.9994251100199647
+        },
+        "target_truth": {
+            "x": -1.0,
+            "z": -1.0,
+            "y": -1.0
+        },
+        "parsimony": 3,
+        "exact_match": true,
+        "coef_rmse": 0.000686421384158293,
+        "time_seconds": 5.76,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "x",
+                "bic": 587.0097246229908,
+                "mse": 3.19501004899255,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "z",
+                "bic": -78.97832182771842,
+                "mse": 0.8329221687545212,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 3,
+                "proposed_feature": "y",
+                "bic": -3921.8782773895155,
+                "mse": 0.0003778383106837236,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 4,
+                "proposed_feature": "1",
+                "bic": -3921.8782773895155,
+                "mse": 0.0003778383106837236,
+                "accepted": false,
+                "reason": "Duplicate or Zero Coef"
+            }
+        ]
+    },
+    "z": {
+        "discovered_equation": {
+            "exp(-(x))": -1.0004479937924144,
+            "y": -1.0003134924477908,
+            "1": 1.000041175429173
+        },
+        "target_truth": {
+            "y": -1.0,
+            "1": 1.0,
+            "exp(-(x))": -1.0
+        },
+        "parsimony": 3,
+        "exact_match": true,
+        "coef_rmse": 0.00031658141071521414,
+        "time_seconds": 6.77,
+        "search_history": [
+            {
+                "iteration": 1,
+                "proposed_feature": "exp(-(x))",
+                "bic": 336.7669124451376,
+                "mse": 1.9369307036477952,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 2,
+                "proposed_feature": "y",
+                "bic": -43.77475832001025,
+                "mse": 0.8936796073938031,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 3,
+                "proposed_feature": "1",
+                "bic": -3411.729329044205,
+                "mse": 0.0010481314131902929,
+                "accepted": true,
+                "reason": "BIC Improvement"
+            },
+            {
+                "iteration": 4,
+                "proposed_feature": "x",
+                "bic": -3411.729329044205,
+                "mse": 0.0010481314131902929,
+                "accepted": false,
+                "reason": "Duplicate or Zero Coef"
+            }
+        ]
+    }
+}

@@ -6,13 +6,15 @@ RULES = [
     ("M", ["sin", "M"]),
     ("M", ["cos", "M"]),
     ("M", ["exp", "M"]),
+    ("M", ["-", "M"]),
     ("M", ["x"]),
     ("M", ["y"]),
-    ("M", ["z"])
+    ("M", ["z"]),
+    ("M", ["1"])
 ]
 
 NON_TERMINALS = {"f", "M"}
-TERMINALS = {"x", "y", "z", "*", "sin", "cos", "exp"}
+TERMINALS = {"x", "y", "z", "*", "sin", "cos", "exp", "-", "1"}
 
 def _get_stack(state):
     """

@@ -1,6 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{n}{data} \PYG{o}{=} \PYG{n}{generate\PYGZus{}data\PYGZus{}harmonic\PYGZus{}oscillator}\PYG{p}{(}
-    \PYG{n}{n\PYGZus{}points}\PYG{o}{=}\PYG{n}{config}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}n\PYGZus{}points\PYGZdq{}}\PYG{p}{],}
-    \PYG{n}{noise}\PYG{o}{=}\PYG{n}{config}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}noise\PYGZdq{}}\PYG{p}{]}
-\PYG{p}{)}
-\end{MintedVerbatim}

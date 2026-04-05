@@ -5,7 +5,8 @@ from src.tree import extract_features_from_tree
 UNARY_OPS = {
     "sin": np.sin,
     "cos": np.cos,
-    "exp": lambda x: np.exp(np.clip(x, -100, 100))
+    "exp": lambda x: np.exp(np.clip(x, -100, 100)),
+    "-": np.negative
 }
 
 BINARY_OPS = {
@@ -21,6 +22,9 @@ def evaluate_node(node, variables):
     if s in ["x", "y", "z"]:
         # safe default to zeros if the data array lacks that dimension
         return variables.get(s, np.zeros_like(variables["x"]))
+        
+    if s == "1":
+        return np.ones_like(variables["x"])
 
     if s == "M":
         return evaluate_M(node, variables)
@@ -92,11 +96,12 @@ def evaluate_tree_sindy(root_node, variables, y_dot, locked_features_cols=None):
     
     # init the core SINDy STLSQ optimizer
     # threshold < 0.1 because our true physics constant is -0.1
-    optimizer = ps.STLSQ(threshold=0.05, alpha=0.05)
+    optimizer = ps.STLSQ(threshold=0.01, alpha=0.01)
     
     try:
         optimizer.fit(Theta, y_dot)
-    except Exception:
+    except Exception as e:
+        print("Exception in evaluate:", e)
         # Fails if matrix is completely singular or data is corrupted
         return 1e10, []
         
