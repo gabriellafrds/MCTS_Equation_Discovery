@@ -27,4 +27,3 @@ env/
 *.log
 *.toc
 _minted*/
-*.pdf
